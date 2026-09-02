@@ -1,0 +1,6 @@
+{
+  "name": "Cyprus Open Data Hub",
+  "description": "Explore and visualize open public data and free API sources across Cyprus.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
