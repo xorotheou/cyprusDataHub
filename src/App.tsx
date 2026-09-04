@@ -3,6 +3,7 @@ import { Sidebar } from './components/Sidebar';
 import { CategoryGrid } from './components/CategoryGrid';
 import { CategoryDetailView } from './components/CategoryDetailView';
 import { CYPRUS_DATA_CATEGORIES } from './data/categories';
+import { OpenDataCategory } from './types';
 import {
   Search,
   MapPin,
@@ -11,11 +12,12 @@ import {
   ExternalLink,
   Sparkles,
   SlidersHorizontal,
-  Info
+  Info,
+  Globe2
 } from 'lucide-react';
 
 const CYPRUS_DISTRICTS = [
-  'All Districts',
+  'All Cyprus',
   'Nicosia (Λευκωσία)',
   'Limassol (Λεμεσός)',
   'Larnaca (Λάρνακα)',
@@ -23,10 +25,52 @@ const CYPRUS_DISTRICTS = [
   'Famagusta (Αμμόχωστος)',
 ];
 
+const ALL_PORTAL_CATEGORY: OpenDataCategory = {
+  id: 'all_portal',
+  name: 'All Cyprus National Datasets',
+  greekName: 'Εθνική Πύλη Ανοικτών Δεδομένων Κύπρου',
+  description: 'Complete official catalog of all 1,940+ public datasets across all government ministries, semi-governmental authorities, and municipalities of Cyprus.',
+  iconName: 'Layers',
+  badge: 'Complete Catalog',
+  datasetCount: 1940,
+  featuredApi: 'Republic of Cyprus Open Data Portal (data.gov.cy & data.europa.eu)',
+  featuredApiEndpoint: 'https://data.europa.eu/api/hub/search/search?filter=dataset&facets=%7B%22country%22%3A%5B%22cy%22%5D%7D&limit=1',
+  apiType: 'CKAN',
+  searchQuery: '',
+  keyMetrics: [
+    { label: 'Total Catalog Datasets', value: '1,940 Active' },
+    { label: 'Publishing Entities', value: '75+ Authorities' },
+    { label: 'License Policy', value: 'Open CC-BY / PSI' },
+  ],
+  sampleDatasets: [
+    {
+      title: 'List of Private Pharmacies in Cyprus',
+      source: 'Ministry of Health',
+      format: 'JSON / CSV',
+      updateFrequency: 'Monthly',
+      description: 'Comprehensive directory of private pharmacies, coordinates, and operating licenses.',
+    },
+    {
+      title: 'Government Employment by Category 2009-2024, Monthly',
+      source: 'Statistical Service of Cyprus (CyStat)',
+      format: 'CSV / XLS',
+      updateFrequency: 'Monthly',
+      description: 'Civil service employment stats across administrative branches.',
+    },
+    {
+      title: 'Locations of Port Facilities (Hydrographic Data)',
+      source: 'Department of Lands and Surveys',
+      format: 'GeoJSON / WMS',
+      updateFrequency: 'Quarterly',
+      description: 'Navigational infrastructure, berths, and port facility coordinates.',
+    },
+  ],
+};
+
 export default function App() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedDistrict, setSelectedDistrict] = useState<string>('All Districts');
+  const [selectedDistrict, setSelectedDistrict] = useState<string>('All Cyprus');
   const [activeFilter, setActiveFilter] = useState<'all' | 'realtime' | 'ckan'>('all');
 
   // Filtered categories
@@ -43,7 +87,12 @@ export default function App() {
       if (!matchesSearch) return false;
 
       if (activeFilter === 'realtime') {
-        return category.apiType === 'Real-Time Feed' || category.badge.includes('Real-Time') || category.badge.includes('Sensor');
+        return (
+          category.apiType === 'Real-Time Feed' ||
+          category.badge.toLowerCase().includes('real-time') ||
+          category.badge.toLowerCase().includes('sensor') ||
+          category.badge.toLowerCase().includes('grid')
+        );
       }
       if (activeFilter === 'ckan') {
         return category.apiType === 'CKAN' || category.apiType === 'REST';
@@ -54,10 +103,13 @@ export default function App() {
   }, [searchQuery, activeFilter]);
 
   const selectedCategory = useMemo(() => {
+    if (selectedCategoryId === 'all_portal') {
+      return ALL_PORTAL_CATEGORY;
+    }
     return CYPRUS_DATA_CATEGORIES.find((c) => c.id === selectedCategoryId) || null;
   }, [selectedCategoryId]);
 
-  const totalDatasets = useMemo(() => {
+  const totalSectorDatasets = useMemo(() => {
     return CYPRUS_DATA_CATEGORIES.reduce((sum, c) => sum + c.datasetCount, 0);
   }, []);
 
@@ -82,10 +134,10 @@ export default function App() {
           <div className="flex items-center gap-3">
             <div>
               <h2 className="text-base font-bold text-slate-900 leading-tight">
-                Cyprus Open Data Catalog & APIs
+                Cyprus Open Data Portal & API Explorer
               </h2>
               <p className="text-xs text-slate-500">
-                Official free public datasets and live sensor interfaces in Cyprus
+                Live official datasets and public endpoints from data.gov.cy & data.europa.eu
               </p>
             </div>
           </div>
@@ -99,7 +151,7 @@ export default function App() {
                 value={selectedDistrict}
                 onChange={(e) => setSelectedDistrict(e.target.value)}
                 aria-label="Filter by Cyprus District"
-                className="bg-transparent text-xs font-medium text-slate-800 focus:outline-none cursor-pointer"
+                className="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer"
               >
                 {CYPRUS_DISTRICTS.map((d) => (
                   <option key={d} value={d}>
@@ -116,7 +168,7 @@ export default function App() {
                 onClick={() => setActiveFilter('all')}
                 className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
                   activeFilter === 'all'
-                    ? 'bg-white text-slate-900 shadow-xs font-semibold'
+                    ? 'bg-white text-slate-900 shadow-xs font-bold'
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
@@ -127,11 +179,11 @@ export default function App() {
                 onClick={() => setActiveFilter('realtime')}
                 className={`px-2.5 py-1 rounded-md font-medium transition-colors flex items-center gap-1 ${
                   activeFilter === 'realtime'
-                    ? 'bg-white text-amber-700 shadow-xs font-semibold'
+                    ? 'bg-white text-amber-700 shadow-xs font-bold'
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
-                <Radio className="w-3 h-3 text-emerald-500" />
+                <Radio className="w-3 h-3 text-emerald-500 animate-pulse" />
                 Live Feeds
               </button>
               <button
@@ -139,7 +191,7 @@ export default function App() {
                 onClick={() => setActiveFilter('ckan')}
                 className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
                   activeFilter === 'ckan'
-                    ? 'bg-white text-slate-900 shadow-xs font-semibold'
+                    ? 'bg-white text-slate-900 shadow-xs font-bold'
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
@@ -155,37 +207,43 @@ export default function App() {
           {!selectedCategory && (
             <div
               id="kpi-banner"
-              className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4"
+              className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4"
             >
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    Active Registry
+                    Live Portal Synchronized
                   </span>
                   <span className="text-xs text-slate-500">
-                    PSI Directive Compliant
+                    Direct API Integration with data.europa.eu / cy
                   </span>
                 </div>
                 <h3 className="text-lg font-bold text-slate-900">
-                  Explore {CYPRUS_DATA_CATEGORIES.length} Open Data Sectors
+                  Explore Cyprus Official Open Data Domains
                 </h3>
                 <p className="text-xs text-slate-600 max-w-2xl">
-                  Filter through datasets across Transportation, Environment, Demographics, Energy, Public Health, and more.
+                  Click on any domain to inspect and browse <strong>all published datasets</strong>, search by keywords, filter by government ministry or municipality, and view raw JSON payloads.
                 </p>
               </div>
 
               <div className="flex items-center gap-4 divide-x divide-slate-100 shrink-0">
                 <div className="text-center px-3">
-                  <div className="text-xs text-slate-500 font-medium">Categories</div>
-                  <div className="text-xl font-bold text-slate-900">{CYPRUS_DATA_CATEGORIES.length}</div>
+                  <div className="text-xs text-slate-500 font-medium">Core Domains</div>
+                  <div className="text-xl font-extrabold text-slate-900">{CYPRUS_DATA_CATEGORIES.length}</div>
                 </div>
                 <div className="text-center px-3">
-                  <div className="text-xs text-slate-500 font-medium">Total Datasets</div>
-                  <div className="text-xl font-bold text-amber-700">{totalDatasets}+</div>
+                  <div className="text-xs text-slate-500 font-medium">Domain Datasets</div>
+                  <div className="text-xl font-extrabold text-amber-700">{totalSectorDatasets}</div>
                 </div>
                 <div className="text-center px-3">
-                  <div className="text-xs text-slate-500 font-medium">Live Feeds</div>
-                  <div className="text-xl font-bold text-emerald-600">8 APIs</div>
+                  <div className="text-xs text-slate-500 font-medium">National Catalog</div>
+                  <button
+                    onClick={() => setSelectedCategoryId('all_portal')}
+                    className="text-xl font-extrabold text-sky-700 hover:underline block"
+                    title="View all 1,940 Cyprus datasets"
+                  >
+                    1,940+
+                  </button>
                 </div>
               </div>
             </div>
@@ -205,7 +263,7 @@ export default function App() {
                     Cyprus Data Categories
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Showing {filteredCategories.length} category domains ({selectedDistrict})
+                    Showing {filteredCategories.length} category domains ({selectedDistrict}) — click any domain to get all datasets
                   </p>
                 </div>
 
@@ -213,7 +271,7 @@ export default function App() {
                   <button
                     id="clear-search-btn"
                     onClick={() => setSearchQuery('')}
-                    className="text-xs font-medium text-amber-700 hover:underline"
+                    className="text-xs font-semibold text-amber-700 hover:underline"
                   >
                     Clear search filter
                   </button>
